@@ -4,8 +4,8 @@
  */
 package put.ai.games.beastplayer;
 
-import java.util.List;
-import java.util.Random;
+import java.util.*;
+
 import put.ai.games.game.Board;
 import put.ai.games.game.Move;
 import put.ai.games.game.Player;
@@ -13,11 +13,12 @@ import put.ai.games.game.Player;
 public class BeastPlayer extends Player {
 
     private Integer max = 0;
+    private Move max_move;
     private int depth = 3;
 
     @Override
     public String getName() {
-        return "IM THE BEAST";
+        return "IM THE BEAST4";
     }
 
     public Move nextMoveRandom(Board board){
@@ -29,45 +30,46 @@ public class BeastPlayer extends Player {
     @Override
     public Move nextMove(Board board) {
         List<Move> moves = board.getMovesFor(getColor());
-        return moves.get(new Random().nextInt(moves.size()));
+        max = 0;
+        minmax(this.depth, board, false);
+        return max_move;
     }
 
-    public int intelligentMove(GameTree currentTree, boolean maximizingPlayer, Board board)
+    public int minmax(int depth, Board parent_board, boolean maximizingPlayer)
     {
         int bestVal = 0;
-
-        if(depth == 0)
-        {
-            //System.out.println("Reached leaf node with utility of " + currentTree.getBoard().getUtility() + ". Board:");
-            //currentTree.getBoard().printBoard();
-            return getUtility(board);
+        Move best_move = null;
+        if(depth == 0) {
+            return getUtility(parent_board);
         }
+
+        List<Move> possible_moves = parent_board.getMovesFor(getColor());
+        Board temp_board = null;
 
         if(maximizingPlayer){
             bestVal = Integer.MIN_VALUE;
-            board.
-            currentTree.populateNodeChildren();
-            ArrayList<GameTree> childTrees = currentTree.getChildTrees();
-            //for each child tree of current tree node
-            for(int i = 0; i < childTrees.size(); i++) {
-                //get max utility value
-                int thisVal = intelligentMove(depth - 1, childTrees.get(i), false);
-                if(bestVal < thisVal) bestVal = thisVal;
+            for(Move move : possible_moves) {
+                temp_board = parent_board.clone();
+                temp_board.doMove(move);
+                int thisVal = minmax(depth - 1, temp_board, false);
+                if(bestVal < thisVal) {
+                    bestVal = thisVal;
+                    best_move = move;
+                    }
+                }
             }
-            //if depth of one below parent is reached through recursion and the board has better utility than the previous best, make new board next move
             if(bestVal > max && depth == this.depth - 1) {
                 max = bestVal;
-                maxBoard = currentTree.getBoard();
+                max_move = best_move;
             }
-        }
-        else{	//minimizing player
+
+        else{//minimizing player
             bestVal = Integer.MAX_VALUE;
-            currentTree.populateNodeChildren();
-            ArrayList<GameTree> childTrees = currentTree.getChildTrees();
-            for(int i = 0; i < childTrees.size(); i++)
-            {
-                int thisVal = intelligentMove(depth - 1, childTrees.get(i), true);
-                if(bestVal > thisVal)
+                for(Move move : possible_moves){
+                    temp_board = parent_board.clone();
+                    temp_board.doMove(move);
+                    int thisVal = minmax(depth - 1, temp_board  , true);
+                    if(bestVal > thisVal)
                     bestVal = thisVal;
             }
         }
@@ -75,16 +77,16 @@ public class BeastPlayer extends Player {
         return bestVal;
     }
 
+
     public int getUtility(Board board) {
         Color color = this.getColor();
         Integer size = board.getSize();
         int utility = 0;
-        int streak = 0;			//streak is used to add additional points for more than 2 in a row
-        //2 in a row = 1 pt, 3 in a row = 2 pt, etc.
+        int streak = 0;
 
-        // hotizontalle
-        for(int i = 0; i < size; i++){	//go down row
-            for(int j = 0; j < size-1; j++){	//count doubles
+        // vertical
+        for(int i = 0; i < size; i++){
+            for(int j = 0; j < size-1; j++){
                 if(board.getState(i,j) == color && board.getState(i,j+1) == color){
                     utility += streak + 1;
                     streak++;
@@ -93,9 +95,9 @@ public class BeastPlayer extends Player {
             }
         }
 
-        // verticalle
-        for(int i = 0; i < size; i++){	//go down columns
-            for(int j = 0; j < size-1; j++){	//count doubles
+        // horizontal
+        for(int i = 0; i < size; i++){
+            for(int j = 0; j < size-1; j++){
                 if(board.getState(j, i) == color && board.getState(j+1, i) == color) {
                     utility += streak + 1;
                     streak++;
@@ -104,7 +106,7 @@ public class BeastPlayer extends Player {
             }
         }
 
-        // diagonalle (start top-left)
+        // diagonal 1
         for(int i = 0; i < size-1; i++) {
             if(board.getState(i,i) == color && board.getState(i+1, i+1) == color) {
                 utility += streak + 1;
@@ -113,7 +115,7 @@ public class BeastPlayer extends Player {
             else streak = 0;
         }
 
-        //count main diagonal up-right to down-left
+        // diagonal 2
         for(int i = 0; i < size-1; i++) {
             if(board.getState(i, size-1-i) == color && board.getState(i+1,size-2-i) == color) {
                 utility += streak + 1;
@@ -126,54 +128,4 @@ public class BeastPlayer extends Player {
         return utility;
     }
 
-//    public int getUtility(Board board) {
-//        Color color = this.getColor();
-//        Integer size = board.getSize();
-//        int utility = 0;
-//        int streak = 0;			//streak is used to add additional points for more than 2 in a row
-//        //2 in a row = 1 pt, 3 in a row = 2 pt, etc.
-//
-//        // hotizontalle
-//        for(int i = 0; i < 6; i++){	//go down row
-//            for(int j = 0; j < 5; j++){	//count doubles
-//                if(board.getState(i,j) == color && board.getState(i,j+1) == color){
-//                    utility += streak + 1;
-//                    streak++;
-//                }
-//                else streak = 0;
-//            }
-//        }
-//
-//        // verticalle
-//        for(int i = 0; i < 6; i++){	//go down columns
-//            for(int j = 0; j < 5; j++){	//count doubles
-//                if(board.getState(j, i) == color && board.getState(j+1, i) == color) {
-//                    utility += streak + 1;
-//                    streak++;
-//                }
-//                else streak = 0;
-//            }
-//        }
-//
-//        // diagonalle (start top-left)
-//        for(int i = 0; i < 5; i++) {
-//            if(board.getState(i,i) == color && board.getState(i+1, i+1) == color) {
-//                utility += streak + 1;
-//                streak++;
-//            }
-//            else streak = 0;
-//        }
-//
-//        //count main diagonal up-right to down-left
-//        for(int i = 0; i < 5; i++) {
-//            if(board.getState(i, 5-i) == color && board.getState(i+1,4-i) == color) {
-//                utility += streak + 1;
-//                streak++;
-//            }
-//            else
-//                streak = 0;
-//        }
-//
-//        return utility;
-//    }
 }
