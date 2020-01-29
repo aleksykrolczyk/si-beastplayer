@@ -14,11 +14,11 @@ public class BeastPlayer extends Player {
 
     private Integer max = 0;
     private Move max_move;
-    private int depth = 3;
+    private int depth = 2;
 
     @Override
     public String getName() {
-        return "IM THE BEAST4";
+        return "Aleksy Królczyk 136746 Michał Cichy 132203";
     }
 
     public Move nextMoveRandom(Board board){
@@ -29,9 +29,13 @@ public class BeastPlayer extends Player {
 
     @Override
     public Move nextMove(Board board) {
-        List<Move> moves = board.getMovesFor(getColor());
+        Board clone = board.clone();
+
         max = 0;
-        minmax(this.depth, board, false);
+        minmax(this.depth, clone, false);
+        System.out.println(max_move);
+        clone.doMove(max_move);
+        System.out.println(getUtility(clone));;
         return max_move;
     }
 
@@ -44,14 +48,24 @@ public class BeastPlayer extends Player {
         }
 
         List<Move> possible_moves = parent_board.getMovesFor(getColor());
-        Board temp_board = null;
+        Board temp_board = parent_board.clone();
 
-        if(maximizingPlayer){
+        for(Move move: possible_moves){
+            temp_board.doMove(move);
+            if (temp_board.getWinner(getColor()) == getColor()){
+                max_move = move;
+                return Integer.MAX_VALUE;
+            }
+            temp_board.undoMove(move);
+        }
+
+
+        if(maximizingPlayer){ // max
             bestVal = Integer.MIN_VALUE;
             for(Move move : possible_moves) {
-                temp_board = parent_board.clone();
                 temp_board.doMove(move);
                 int thisVal = minmax(depth - 1, temp_board, false);
+                temp_board.undoMove(move);
                 if(bestVal < thisVal) {
                     bestVal = thisVal;
                     best_move = move;
@@ -63,14 +77,15 @@ public class BeastPlayer extends Player {
                 max_move = best_move;
             }
 
-        else{//minimizing player
+        else{ // min
             bestVal = Integer.MAX_VALUE;
-                for(Move move : possible_moves){
-                    temp_board = parent_board.clone();
-                    temp_board.doMove(move);
-                    int thisVal = minmax(depth - 1, temp_board  , true);
-                    if(bestVal > thisVal)
+            for(Move move : possible_moves){
+                temp_board.doMove(move);
+                int thisVal = minmax(depth - 1, temp_board , true);
+                temp_board.undoMove(move);
+                if(bestVal > thisVal){
                     bestVal = thisVal;
+                }
             }
         }
 
@@ -84,6 +99,10 @@ public class BeastPlayer extends Player {
         int utility = 0;
         int streak = 0;
 
+        if (board.getWinner(color) == color){
+            return Integer.MAX_VALUE;
+        }
+
         // vertical
         for(int i = 0; i < size; i++){
             for(int j = 0; j < size-1; j++){
@@ -94,6 +113,7 @@ public class BeastPlayer extends Player {
                 else streak = 0;
             }
         }
+        streak = 0;
 
         // horizontal
         for(int i = 0; i < size; i++){
@@ -105,6 +125,7 @@ public class BeastPlayer extends Player {
                 else streak = 0;
             }
         }
+        streak = 0;
 
         // diagonal 1
         for(int i = 0; i < size-1; i++) {
@@ -114,6 +135,7 @@ public class BeastPlayer extends Player {
             }
             else streak = 0;
         }
+        streak = 0;
 
         // diagonal 2
         for(int i = 0; i < size-1; i++) {
@@ -127,5 +149,4 @@ public class BeastPlayer extends Player {
 
         return utility;
     }
-
 }

@@ -12,7 +12,8 @@ import java.util.List;
 
 public class PentagoBoard extends TypicalBoard {
     public PentagoBoard(int boardSize) {
-        super(boardSize);
+//        super(boardSize);
+        super(6);
         if (boardSize % 2 != 0)
             throw new IllegalArgumentException("Board size must be even");
         int half = boardSize / 2;
